@@ -10,6 +10,15 @@ int read_args(int argc, char *argv[], int *K, int *iter) {
     return 0;
 }
 
+float calc_euclidean_distance(float *point1, float *point2, int *d){
+    float sum = 0;
+    for (int i = 0; i<*d; i++){
+        sum += powf((point1[i] - point2[i]), 2);
+    }
+    return sqrt(sum);
+
+}
+
 int main(int argc, char *argv[]) {
     int K = 0;
     int iter = DEFAULT_ITER;
