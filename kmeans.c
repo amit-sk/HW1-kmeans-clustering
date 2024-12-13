@@ -159,10 +159,14 @@ int run_kmeans(int K, int iter, int d, struct datapoint *points, struct centroid
     return 0;
 }
 
-float calc_euclidean_distance(float *point1, float *point2, int *d){
-    float sum = 0;
+double calc_euclidean_distance(struct datapoint *point1, struct datapoint *point2, int *d){
+    double sum = 0;
+    struct coord *coord1 = point1->coords;
+    struct coord *coord2 = point2->coords;
     for (int i = 0; i<*d; i++){
-        sum += powf((point1[i] - point2[i]), 2);
+        sum += powf((coord1->coord - coord2->coord), 2);
+        coord1 = coord1->next;
+        coord2 = coord2->next;
     }
     return sqrt(sum);
 
