@@ -6,6 +6,12 @@
 const double EPSILON = 0.001;
 const int DEFAULT_ITER = 200;
 
+struct centroid {
+    double *centroid_coords;
+    double sum;
+    int count;
+};
+
 struct datapoint
 {
     double *coords;
@@ -32,16 +38,62 @@ int read_args(int argc, char *argv[], int *K, int *iter, int *d, int *N, struct 
     return 0;
 }
 
+int init_centroids(int K, int N, int d, /*pointer to points,*/ struct centroid **centroids) {
+    int i = 0;
+
+    /* memory initialized as zeroes */
+    struct centroid *cent = calloc(K, sizeof(struct centroid));
+    if (cent == NULL) {
+        return 1;
+    }
+
+    /*
+    for (; i < K; i++) {
+        *(cent + i)->centroid_coords = point[i];
+    }
+    */
+
+    *centroids = cent;
+    return 0;
+}
+
+int init_centroids(int K, int N, int d, /*pointer to points,*/ struct centroid **centroids) {
+    int i = 0;
+
+    /* memory initialized as zeroes */
+    struct centroid *cent = calloc(K, sizeof(struct centroid));
+    if (cent == NULL) {
+        return 1;
+    }
+
+    /*
+    for (; i < K; i++) {
+        *(cent + i)->centroid_coords = point[i];
+    }
+    */
+
+    *centroids = cent;
+    return 0;
+}
+
 int main(int argc, char *argv[]) {
-    int K = 0;
+    int K = 3;
     int iter = DEFAULT_ITER;
     int d = 0;
     int N = 0;
     struct datapoint *datapoints = NULL;
 
+    struct centroid *centroids = NULL;
 
     if (0 != read_args(argc, argv, &K, &iter, &d, &N, &datapoints)) {
         /* error */
+        printf("Error reading args\n");
+        return 1;
+    }
+
+    if (0 != init_centroids(K, K, K, &centroids)) {
+        /* error */
+        printf("Error initializing centroids\n");
         return 1;
     }
 
