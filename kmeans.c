@@ -6,7 +6,7 @@ const double EPSILON = 0.001;
 const int DEFAULT_ITER = 200;
 
 struct centroid {
-    double *centroid_coords;
+    struct coord *centroid_coords;
     double sum;
     int count;
 };
@@ -105,7 +105,7 @@ int read_args(int argc, char *argv[], int *K, int *iter, int *d, int *N, struct 
         return 1;
     }
 
-    /* printing the info extracted, can delete later */
+    /* TODO: printing the info extracted, can delete later */
     printf("K = %d, N = %d, d = %d, iter = %d\n", *K, *N, *d, *iter);
 
     return 0;
@@ -122,6 +122,7 @@ int init_centroids(int K, struct datapoint *points, struct centroid **centroids)
 
     /* set first K centroids to first K datapoints. */
     for (; i < K; i++) {
+        /* TODO: we probably want to create copies of the coords so we can free them later */
         (cent + i)->centroid_coords = points->coords;
         points = points->next;
     }
@@ -132,24 +133,24 @@ int init_centroids(int K, struct datapoint *points, struct centroid **centroids)
 
 int run_kmeans(int K, int iter, int d, struct datapoint *points, struct centroid *centroids) {
     int is_not_converged = 1;
-    int i = 0;
     int j = 0;
     struct datapoint *point = NULL;
     struct centroid *cent = NULL;
 
+    int i = 0;
     for (; i < iter && is_not_converged; i++) {
         point = points;
         do {
             /*
-            Go over all centroids - find closest (euclidean distance function), add to sum and counter of centroid.
+            TODO: Go over all centroids - find closest (euclidean distance function), add to sum and counter of centroid.
             */
-            point = points->next;
+            point = point->next;
         } while (point != NULL);
         
         cent = centroids;
         for (j = 0; j < K; j++, cent++) {
             /*
-            * Go over all centroids:
+            * TODO: Go over all centroids:
             * update their value to their sum divided by their counter, and set sum and counter as 0.
             * If their delta is greater than eps, set “all less than eps” to false
             */
@@ -165,45 +166,45 @@ int main(int argc, char *argv[]) {
     int N = 0;
     struct datapoint *datapoints = NULL;
     struct centroid *centroids = NULL;
-    /* stuff for printing the data, can delete later */
+
+    /* TODO: stuff for printing the data, can delete later */
     struct datapoint *curr_datapoint;
     struct coord *curr_coord;
 
-
     if (0 != read_args(argc, argv, &K, &iter, &d, &N, &datapoints)) {
-        /* error */
-        printf("Error reading args\n");
         return 1;
     }
 
-    /* printing the data, can delete later */
+    /* TODO: printing the data, can delete later */
     curr_datapoint = datapoints;
     do {
         curr_coord = curr_datapoint->coords;
         do {
             printf("%f,", curr_coord->coord);
             curr_coord = curr_coord->next;
-        }
-        while (curr_coord->next != NULL);
+        } while (curr_coord->next != NULL);
         printf("\n");
         curr_datapoint = curr_datapoint->next;
-    }
+    } while (curr_datapoint->next != NULL);
 
-    while (curr_datapoint->next != NULL);
     if (0 != init_centroids(K, datapoints, &centroids)) {
-        /* error */
+        /* TODO: later delete indicative error */
         printf("Error initializing centroids\n");
         printf("An Error Has Occurred\n");
         return 1;
     }
 
     if (0 != run_kmeans(K, iter, d, datapoints, centroids)) {
+        /* TODO: later delete indicative error */
         printf("Error in kmeans algorithm\n");
         printf("An Error Has Occurred\n");
         return 1;
     }
 
     /* TODO: print result */
+
+    /* TODO: free memory */
+    free(centroids);
 
     printf("Done\n");
     return 0;
