@@ -12,10 +12,9 @@ struct centroid {
     int count;
 };
 
-struct datapoint
-{
+struct datapoint {
     double *coords;
-    double *next;
+    struct datapoint *next;
 };
 
 int read_args(int argc, char *argv[], int *K, int *iter, int *d, int *N, struct datapoint **datapoints) {
@@ -38,7 +37,7 @@ int read_args(int argc, char *argv[], int *K, int *iter, int *d, int *N, struct 
     return 0;
 }
 
-int init_centroids(int K, int N, int d, struct datapoint *points, struct centroid **centroids) {
+int init_centroids(int K, struct datapoint *points, struct centroid **centroids) {
     int i = 0;
 
     /* memory initialized as zeroes. */
@@ -48,18 +47,45 @@ int init_centroids(int K, int N, int d, struct datapoint *points, struct centroi
     }
 
     /* set first K centroids to first K datapoints. */
-    struct datapoint *point = points;
     for (; i < K; i++) {
-        (cent + i)->centroid_coords = point->coords;
-        point = point->next;
+        (cent + i)->centroid_coords = points->coords;
+        points = points->next;
     }
 
     *centroids = cent;
     return 0;
 }
 
+int run_kmeans(int K, int iter, int d, struct datapoint *points, struct centroid *centroids) {
+    int is_not_converged = 1;
+    int i = 0;
+    int j = 0;
+    struct datapoint *point = NULL;
+    struct centroid *cent = NULL;
+
+    for (; i < iter && is_not_converged; i++) {
+        point = points;
+        do {
+            /*
+            Go over all centroids - find closest (euclidean distance function), add to sum and counter of centroid.
+            */
+            point = points->next;
+        } while (point != NULL);
+        
+        cent = centroids;
+        for (j = 0; j < K; j++, cent++) {
+            /*
+            * Go over all centroids:
+            * update their value to their sum divided by their counter, and set sum and counter as 0.
+            * If their delta is greater than eps, set “all less than eps” to false
+            */
+        }
+    }
+    return 0;
+}
+
 int main(int argc, char *argv[]) {
-    int K = 3;
+    int K = 0;
     int iter = DEFAULT_ITER;
     int d = 0;
     int N = 0;
@@ -72,11 +98,20 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    if (0 != init_centroids(K, K, K, datapoints, &centroids)) {
+    if (0 != init_centroids(K, datapoints, &centroids)) {
         /* error */
         printf("Error initializing centroids\n");
+        printf("An Error Has Occurred\n");
         return 1;
     }
+
+    if (0 != run_kmeans(K, iter, d, datapoints, centroids)) {
+        printf("Error in kmeans algorithm\n");
+        printf("An Error Has Occurred\n");
+        return 1;
+    }
+
+    /* TODO: print result */
 
     printf("Done\n");
     return 0;
