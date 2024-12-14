@@ -7,7 +7,7 @@ const int DEFAULT_ITER = 200;
 
 struct centroid {
     struct coord *centroid_coords;
-    double sum;
+    struct coord *sum;
     int count;
 };
 
@@ -131,7 +131,23 @@ int init_centroids(int K, struct datapoint *points, struct centroid **centroids)
     return 0;
 }
 
-int run_kmeans(int K, int iter, int d, struct datapoint *points, struct centroid *centroids) {
+int add_coord(struct centroid *cent, struct datapoint *point, int *d){
+    int i;
+    struct coord *curr_centroid_coord = cent->sum;
+    struct coord *curr_datapoint_coord = point->coords;
+    for (;i<d;i++){
+        curr_centroid_coord->coord += curr_datapoint_coord->coord;
+        curr_centroid_coord = curr_centroid_coord->next;
+        curr_datapoint_coord = curr_datapoint_coord->next;
+    }
+    return 0;
+    /*
+    has to be checked
+    */
+    
+}
+
+int run_kmeans(int K, int iter, int *d, struct datapoint *points, struct centroid *centroids) {
     int is_not_converged = 1;
     int j = 0;
     struct datapoint *point = NULL;
@@ -141,17 +157,19 @@ int run_kmeans(int K, int iter, int d, struct datapoint *points, struct centroid
     for (; i < iter && is_not_converged; i++) {
         point = points;
         do {
-            struct centroid *max_cent = NULL;
-            double max_distance = 0;
+            struct centroid *min_cent = NULL;
+            double min_distance = 0;
             double curr_distance = 0;
             cent = centroids;
-            while(cent != NULL){
+            int index = 0;
+            for (; i<K; i++){
                 curr_distance = calc_euclidean_distance(cent, point, d);
-                if (curr_distance > max_distance){
-                    max_distance = curr_distance;
-                    max_cent = cent;
+                if (curr_distance < min_distance){
+                    min_distance = curr_distance;
+                    min_cent = cent;
                 }
-                cent = cent.
+                min_cent->count+=1;
+                min_cent->sum+=point->coords
             }
             /*
             TODO: Go over all centroids - find closest (euclidean distance function), add to sum and counter of centroid.
