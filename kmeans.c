@@ -141,6 +141,18 @@ int run_kmeans(int K, int iter, int d, struct datapoint *points, struct centroid
     for (; i < iter && is_not_converged; i++) {
         point = points;
         do {
+            struct centroid *max_cent = NULL;
+            double max_distance = 0;
+            double curr_distance = 0;
+            cent = centroids;
+            while(cent != NULL){
+                curr_distance = calc_euclidean_distance(cent, point, d);
+                if (curr_distance > max_distance){
+                    max_distance = curr_distance;
+                    max_cent = cent;
+                }
+                cent = cent.
+            }
             /*
             TODO: Go over all centroids - find closest (euclidean distance function), add to sum and counter of centroid.
             */
@@ -163,8 +175,9 @@ double calc_euclidean_distance(struct datapoint *point1, struct datapoint *point
     double sum = 0;
     struct coord *coord1 = point1->coords;
     struct coord *coord2 = point2->coords;
-    for (int i = 0; i<*d; i++){
-        sum += powf((coord1->coord - coord2->coord), 2);
+    int i;
+    for (i = 0; i<*d; i++){
+        sum += pow((coord1->coord - coord2->coord), 2);
         coord1 = coord1->next;
         coord2 = coord2->next;
     }
