@@ -92,6 +92,7 @@ int read_args(int argc, char *argv[], int *K, int *iter, int *d, int *N, struct 
             (*N)++;
         }
     }
+    free(first_coord);
 
     /* validate K from above */
     if (*K >= *N) {
@@ -103,6 +104,29 @@ int read_args(int argc, char *argv[], int *K, int *iter, int *d, int *N, struct 
     printf("K = %d, N = %d, d = %d, iter = %d\n", *K, *N, *d, *iter);
 
     return 0;
+}
+
+void free_datapoints_memory(struct datapoint **datapoints) {
+    struct datapoint *curr_datapoint, *next_datapoint;
+    struct coord *curr_coord, *next_coord;
+    
+    curr_datapoint = *datapoints;
+    do {
+        curr_coord = curr_datapoint->coords;
+        do {
+            next_coord = curr_coord->next;
+            free(curr_coord);
+            curr_coord = next_coord;
+        }
+        while (next_coord->next != NULL);
+        free(next_coord);
+        
+        next_datapoint = curr_datapoint->next;
+        free(curr_datapoint);
+        curr_datapoint = next_datapoint;
+    }
+    while (next_datapoint->next != NULL);
+    free(next_datapoint);
 }
 
 int main(int argc, char *argv[]) {
@@ -134,6 +158,8 @@ int main(int argc, char *argv[]) {
         curr_datapoint = curr_datapoint->next;
     }
     while (curr_datapoint->next != NULL);
+
+    free_datapoints_memory(&datapoints);
 
     printf("Done\n");
     return 0;
