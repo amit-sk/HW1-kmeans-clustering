@@ -146,7 +146,7 @@ int add_coord(struct centroid *cent, struct datapoint *point, int *d){
     int i;
     struct coord *curr_sum_coord = cent->sum;
     struct coord *curr_datapoint_coord = point->coords;
-    for (;i<*d;i++){
+    for (i = 0;i<*d;i++){
         curr_sum_coord->coord += curr_datapoint_coord->coord;
         curr_sum_coord = curr_sum_coord->next;
         curr_datapoint_coord = curr_datapoint_coord->next;
@@ -178,19 +178,20 @@ int run_kmeans(int K, int iter, int *d, struct datapoint *points, struct centroi
     int k = 0;
     struct datapoint *point = NULL;
     struct centroid *cent = NULL;
-    int index = 0;
+    int index;
     int i = 0;
-    for (; i < iter && is_not_converged; i++) {
+    
+    for (i = 0; i < iter && is_not_converged; i++) {
         point = points;
         do {
             struct centroid *min_cent = centroids;
-            double min_distance = 0;
+            double min_distance = HUGE_VAL;
             double curr_distance = 0;
-            for (; index<K; index++){
-                curr_distance = calc_euclidean_distance(centroids + i, point, d);
+            for (index = 0; index<K; index++){
+                curr_distance = calc_euclidean_distance(centroids + index, point, d);
                 if (curr_distance < min_distance){
                     min_distance = curr_distance;
-                    min_cent = (centroids + i);
+                    min_cent = (centroids + index);
                 }
             }
             min_cent->count = min_cent->count+1;
@@ -207,11 +208,17 @@ int run_kmeans(int K, int iter, int *d, struct datapoint *points, struct centroi
             struct coord *sum_coord = cent->sum;
             int curr_sum = 0;
 
-            for(;k<*d;k++){
-                curr_coord->coord = sum_coord->coord/cent->count;
-                sum_coord->coord = 0;
-                curr_coord = curr_coord->next;
-                sum_coord = sum_coord->next;
+            is_not_converged = 0;
+            for(k = 0;k<*d;k++){
+                if ((cent + j)->count != 0){
+                    if (fabs(curr_coord->coord-sum_coord->coord/(cent + j)->count) > EPSILON){
+                        is_not_converged = 1;
+                    }
+                    curr_coord->coord = sum_coord->coord/(cent + j)->count;
+                    sum_coord->coord = 0;
+                    curr_coord = curr_coord->next;
+                    sum_coord = sum_coord->next;
+                }
             }
             cent->count = 0;
             
@@ -236,6 +243,7 @@ int main(int argc, char *argv[]) {
     int N = 0;
     struct datapoint *datapoints = NULL;
     struct centroid *centroids = NULL;
+    int i;
 
     /* TODO: stuff for printing the data, can delete later */
     struct datapoint *curr_datapoint;
@@ -272,6 +280,15 @@ int main(int argc, char *argv[]) {
     }
 
     /* TODO: print result */
+    printf("\n");
+    for (i = 0;i<K;i++){
+        struct coord *curr_coord = (centroids + i)->centroid_coords;
+        do {
+            printf("%f,", curr_coord->coord);
+            curr_coord = curr_coord->next;
+        } while (curr_coord->next != NULL);
+        printf("\n");
+    }
 
     /* TODO: free memory */
     free(centroids);
