@@ -111,21 +111,32 @@ int read_args(int argc, char *argv[], int *K, int *iter, int *d, int *N, struct 
     return 0;
 }
 
-int init_centroids(int K, struct datapoint *points, struct centroid **centroids) {
+
+int init_centroids(int d, int K, struct datapoint *points, struct centroid **centroids) {
     int i = 0;
+    int j = 0;
+    struct coord *first_coord = NULL;
+    struct coord *curr_coord = NULL;
 
     /* memory initialized as zeroes. */
     struct centroid *cent = calloc(K, sizeof(struct centroid));
     if (cent == NULL) {
         return 1;
     }
-
+    init_coords(&first_coord, &curr_coord);
+    
     /* set first K centroids to first K datapoints. */
     for (; i < K; i++) {
         /* TODO: we probably want to create copies of the coords so we can free them later */
         (cent + i)->centroid_coords = points->coords;
         points = points->next;
+        /* curr_coord = (cent + i)->sum;*/
+        for (j = 0; j< d; j++){
+            progress_coord(&curr_coord, 0);
+        }
+        (cent + i)->sum = curr_coord;
     }
+
 
     *centroids = cent;
     return 0;
@@ -133,11 +144,11 @@ int init_centroids(int K, struct datapoint *points, struct centroid **centroids)
 
 int add_coord(struct centroid *cent, struct datapoint *point, int *d){
     int i;
-    struct coord *curr_centroid_coord = cent->sum;
+    struct coord *curr_sum_coord = cent->sum;
     struct coord *curr_datapoint_coord = point->coords;
-    for (;i<d;i++){
-        curr_centroid_coord->coord += curr_datapoint_coord->coord;
-        curr_centroid_coord = curr_centroid_coord->next;
+    for (;i<*d;i++){
+        curr_sum_coord->coord += curr_datapoint_coord->coord;
+        curr_sum_coord = curr_sum_coord->next;
         curr_datapoint_coord = curr_datapoint_coord->next;
     }
     return 0;
@@ -147,30 +158,43 @@ int add_coord(struct centroid *cent, struct datapoint *point, int *d){
     
 }
 
+double calc_euclidean_distance(struct centroid *cent, struct datapoint *point2, int *d){
+    double sum = 0;
+    struct coord *coord1 = cent->centroid_coords;
+    struct coord *coord2 = point2->coords;
+    int i;
+    for (i = 0; i<*d; i++){
+        sum += pow((coord1->coord - coord2->coord), 2);
+        coord1 = coord1->next;
+        coord2 = coord2->next;
+    }
+    return sqrt(sum);
+}
+
+
 int run_kmeans(int K, int iter, int *d, struct datapoint *points, struct centroid *centroids) {
     int is_not_converged = 1;
     int j = 0;
+    int k = 0;
     struct datapoint *point = NULL;
     struct centroid *cent = NULL;
-
+    int index = 0;
     int i = 0;
     for (; i < iter && is_not_converged; i++) {
         point = points;
         do {
-            struct centroid *min_cent = NULL;
+            struct centroid *min_cent = centroids;
             double min_distance = 0;
             double curr_distance = 0;
-            cent = centroids;
-            int index = 0;
-            for (; i<K; i++){
-                curr_distance = calc_euclidean_distance(cent, point, d);
+            for (; index<K; index++){
+                curr_distance = calc_euclidean_distance(centroids + i, point, d);
                 if (curr_distance < min_distance){
                     min_distance = curr_distance;
-                    min_cent = cent;
+                    min_cent = (centroids + i);
                 }
-                min_cent->count+=1;
-                min_cent->sum+=point->coords
             }
+            min_cent->count = min_cent->count+1;
+            add_coord(min_cent, point, d);
             /*
             TODO: Go over all centroids - find closest (euclidean distance function), add to sum and counter of centroid.
             */
@@ -179,6 +203,20 @@ int run_kmeans(int K, int iter, int *d, struct datapoint *points, struct centroi
         
         cent = centroids;
         for (j = 0; j < K; j++, cent++) {
+            struct coord *curr_coord = cent->centroid_coords;
+            struct coord *sum_coord = cent->sum;
+            int curr_sum = 0;
+
+            for(;k<*d;k++){
+                curr_coord->coord = sum_coord->coord/cent->count;
+                sum_coord->coord = 0;
+                curr_coord = curr_coord->next;
+                sum_coord = sum_coord->next;
+            }
+            cent->count = 0;
+            
+
+
             /*
             * TODO: Go over all centroids:
             * update their value to their sum divided by their counter, and set sum and counter as 0.
@@ -189,19 +227,7 @@ int run_kmeans(int K, int iter, int *d, struct datapoint *points, struct centroi
     return 0;
 }
 
-double calc_euclidean_distance(struct datapoint *point1, struct datapoint *point2, int *d){
-    double sum = 0;
-    struct coord *coord1 = point1->coords;
-    struct coord *coord2 = point2->coords;
-    int i;
-    for (i = 0; i<*d; i++){
-        sum += pow((coord1->coord - coord2->coord), 2);
-        coord1 = coord1->next;
-        coord2 = coord2->next;
-    }
-    return sqrt(sum);
 
-}
 
 int main(int argc, char *argv[]) {
     int K = 0;
@@ -231,14 +257,14 @@ int main(int argc, char *argv[]) {
         curr_datapoint = curr_datapoint->next;
     } while (curr_datapoint->next != NULL);
 
-    if (0 != init_centroids(K, datapoints, &centroids)) {
+    if (0 != init_centroids(d, K, datapoints, &centroids)) {
         /* TODO: later delete indicative error */
         printf("Error initializing centroids\n");
         printf("An Error Has Occurred\n");
         return 1;
     }
 
-    if (0 != run_kmeans(K, iter, d, datapoints, centroids)) {
+    if (0 != run_kmeans(K, iter, &d, datapoints, centroids)) {
         /* TODO: later delete indicative error */
         printf("Error in kmeans algorithm\n");
         printf("An Error Has Occurred\n");
