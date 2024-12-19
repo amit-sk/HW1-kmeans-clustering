@@ -58,6 +58,8 @@ int read_args(int argc, char *argv[], int *K, int *iter, int *d, int *N, struct 
     struct datapoint *curr_datapoint;
     struct coord *first_coord, *curr_coord;
 
+    /* TODO: check argc count */
+
     /* Read arguments - argc should be 2 if there is not iter arg, 3 if there is */
     if (argc == 3) {
         sscanf(argv[2], "%d", iter);
@@ -115,55 +117,55 @@ int read_args(int argc, char *argv[], int *K, int *iter, int *d, int *N, struct 
 int init_centroids(int d, int K, struct datapoint *points, struct centroid **centroids) {
     int i = 0;
     int j = 0;
-    struct coord *first_coord = NULL;
+    struct datapoint *curr_datapoint = NULL;
     struct coord *curr_coord = NULL;
+struct coord *point_coord = NULL;
 
     /* memory initialized as zeroes. */
     struct centroid *cent = calloc(K, sizeof(struct centroid));
     if (cent == NULL) {
         return 1;
     }
-    init_coords(&first_coord, &curr_coord);
-    
+        
     /* set first K centroids to first K datapoints. */
-    for (; i < K; i++) {
-        /* TODO: we probably want to create copies of the coords so we can free them later */
-        (cent + i)->centroid_coords = points->coords;
-        points = points->next;
-        /* curr_coord = (cent + i)->sum;*/
-        for (j = 0; j< d; j++){
+    for (curr_datapoint = points; i < K; i++, curr_datapoint = curr_datapoint->next) {
+        /* set centroid coords to first datapoint coordinates */
+        init_coords(&(cent + i)->centroid_coords, &curr_coord);
+        for (point_coord = curr_datapoint->coords; point_coord != NULL; point_coord = point_coord->next) {
+            progress_coord(&curr_coord, point_coord->coord);
+        }
+        
+        /* set sums to zeroes on all dimensions */
+        init_coords(&(cent + i)->sum, &curr_coord);
+        for (j = 0; j < d; j++) {
             progress_coord(&curr_coord, 0);
         }
-        (cent + i)->sum = curr_coord;
-    }
-
+            }
 
     *centroids = cent;
     return 0;
 }
 
-int add_coord(struct centroid *cent, struct datapoint *point, int *d){
+int add_coord_to_centroid(struct centroid *cent, struct datapoint *point, int d){
     int i;
     struct coord *curr_sum_coord = cent->sum;
     struct coord *curr_datapoint_coord = point->coords;
-    for (i = 0;i<*d;i++){
+
+    for (i = 0; i < d; i++){
         curr_sum_coord->coord += curr_datapoint_coord->coord;
         curr_sum_coord = curr_sum_coord->next;
         curr_datapoint_coord = curr_datapoint_coord->next;
     }
     return 0;
-    /*
-    has to be checked
-    */
-    
-}
+    }
 
-double calc_euclidean_distance(struct centroid *cent, struct datapoint *point2, int *d){
+double calc_euclidean_distance(struct centroid *cent, struct datapoint *point2, int d){
     double sum = 0;
     struct coord *coord1 = cent->centroid_coords;
     struct coord *coord2 = point2->coords;
     int i;
-    for (i = 0; i<*d; i++){
+
+    for (i = 0; i < d; i++){
         sum += pow((coord1->coord - coord2->coord), 2);
         coord1 = coord1->next;
         coord2 = coord2->next;
@@ -172,7 +174,7 @@ double calc_euclidean_distance(struct centroid *cent, struct datapoint *point2, 
 }
 
 
-int run_kmeans(int K, int iter, int *d, struct datapoint *points, struct centroid *centroids) {
+int run_kmeans(int d, int K, int iter, struct datapoint *points, struct centroid *centroids) {
     int is_not_converged = 1;
     int j = 0;
     int k = 0;
@@ -209,7 +211,7 @@ int run_kmeans(int K, int iter, int *d, struct datapoint *points, struct centroi
             int curr_sum = 0;
 
             is_not_converged = 0;
-            for(k = 0;k<*d;k++){
+            for(k = 0; k < d; k++){
                 if ((cent + j)->count != 0){
                     if (fabs(curr_coord->coord-sum_coord->coord/(cent + j)->count) > EPSILON){
                         is_not_converged = 1;
@@ -272,7 +274,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    if (0 != run_kmeans(K, iter, &d, datapoints, centroids)) {
+    if (0 != run_kmeans(d, K, iter, datapoints, centroids)) {
         /* TODO: later delete indicative error */
         printf("Error in kmeans algorithm\n");
         printf("An Error Has Occurred\n");
