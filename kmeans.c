@@ -155,22 +155,22 @@ int init_centroids(int d, int K, struct datapoint *points, struct centroid **cen
 
     /* set first K centroids to first K datapoints. */
     for (curr_datapoint = points; i < K; i++, curr_datapoint = curr_datapoint->next) {
-        /* set centroid coords to first datapoint coordinates */
+        /* set centroid coords to datapoint coordinates */
         curr_coord = &(cent + i)->centroid_coords;
-        for (point_coord = curr_datapoint->coords; point_coord != NULL; point_coord = point_coord->next) {
+        for (point_coord = curr_datapoint->coords;
+             point_coord != NULL;
+             point_coord = point_coord->next, curr_coord = &(*curr_coord)->next) {
             if (0 != init_coord(curr_coord, point_coord->coord)) {
                 return 1;
             }
-            curr_coord = &(*curr_coord)->next;
         }
         
         /* set sums to zeroes on all dimensions */
         curr_coord = &(cent + i)->sum;
-        for (j = 0; j < d; j++) {
+        for (j = 0; j < d; j++, curr_coord = &(*curr_coord)->next) {
             if (0 != init_coord(curr_coord, 0)) {
                 return 1;
             }
-            curr_coord = &(*curr_coord)->next;
         }
     }
 
