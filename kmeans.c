@@ -43,6 +43,18 @@ void progress_coord(struct coord **curr_coord, double n) {
     (*curr_coord)->next = NULL;
 }
 
+int init_coord(struct coord **coord, double n) {
+    struct coord *new_coord = malloc(sizeof(struct coord));
+    if (new_coord == NULL) {
+        return 1;
+    }
+    new_coord->coord = n;
+    new_coord->next = NULL;
+
+    *coord = new_coord;
+    return 0;
+}
+
 void progress_datapoint(struct datapoint **curr_datapoint, struct coord **first_coord) {
     (*curr_datapoint)->coords = *first_coord;
     (*curr_datapoint)->next = malloc(sizeof(struct datapoint));
@@ -56,7 +68,8 @@ int read_args(int argc, char *argv[], int *K, int *iter, int *d, int *N, struct 
     double n; /* for the double values */
     char delim; /* commas/\n/... */
     struct datapoint *curr_datapoint;
-    struct coord *first_coord, *curr_coord;
+    struct coord *first_coord;
+    struct coord ** curr_coord;
 
     /* TODO: check argc count */
 
@@ -78,25 +91,38 @@ int read_args(int argc, char *argv[], int *K, int *iter, int *d, int *N, struct 
 
     /* init the first datapoint and its first coordinate */
     init_datapoints(datapoints, &curr_datapoint);
-    init_coords(&first_coord, &curr_coord);
+    /* init_coords(&first_coord, &curr_coord); */
 
     /* go over first line to get d */
+    first_coord = NULL;
+    curr_coord = &first_coord;
     do {
         scanf("%lf%c", &n, &delim);
-        progress_coord(&curr_coord, n);
+        if (0 != init_coord(curr_coord, n)) {
+            return 1;
+        }
+        curr_coord = &(*curr_coord)->next;
         (*d)++;
-    }
-    while (delim != '\n');
+    } while (delim != '\n');
+
     progress_datapoint(&curr_datapoint, &first_coord);
-    init_coords(&first_coord, &curr_coord);
+    /* init_coords(&first_coord, &curr_coord); */
     (*N)++;
 
     /* go over the rest of the lines to get datapoints and N */
+    first_coord = NULL;
+    curr_coord = &first_coord;
     while (scanf("%lf%c", &n, &delim) == 2) {
-        progress_coord(&curr_coord, n);
+        if (0 != init_coord(curr_coord, n)) {
+            return 1;
+        }
+        curr_coord = &(*curr_coord)->next;
+
         if (delim == '\n') { /* if at the end of the line */
+            /* TODO: what to insert at EOF? */
             progress_datapoint(&curr_datapoint, &first_coord);
-            init_coords(&first_coord, &curr_coord);
+            first_coord = NULL;
+            curr_coord = &first_coord;
             (*N)++;
         }
     }
@@ -118,29 +144,35 @@ int init_centroids(int d, int K, struct datapoint *points, struct centroid **cen
     int i = 0;
     int j = 0;
     struct datapoint *curr_datapoint = NULL;
-    struct coord *curr_coord = NULL;
-struct coord *point_coord = NULL;
+    struct coord **curr_coord = NULL;
+    struct coord *point_coord = NULL;
 
     /* memory initialized as zeroes. */
     struct centroid *cent = calloc(K, sizeof(struct centroid));
     if (cent == NULL) {
         return 1;
     }
-        
+
     /* set first K centroids to first K datapoints. */
     for (curr_datapoint = points; i < K; i++, curr_datapoint = curr_datapoint->next) {
         /* set centroid coords to first datapoint coordinates */
-        init_coords(&(cent + i)->centroid_coords, &curr_coord);
+        curr_coord = &(cent + i)->centroid_coords;
         for (point_coord = curr_datapoint->coords; point_coord != NULL; point_coord = point_coord->next) {
-            progress_coord(&curr_coord, point_coord->coord);
+            if (0 != init_coord(curr_coord, point_coord->coord)) {
+                return 1;
+            }
+            curr_coord = &(*curr_coord)->next;
         }
         
         /* set sums to zeroes on all dimensions */
-        init_coords(&(cent + i)->sum, &curr_coord);
+        curr_coord = &(cent + i)->sum;
         for (j = 0; j < d; j++) {
-            progress_coord(&curr_coord, 0);
-        }
+            if (0 != init_coord(curr_coord, 0)) {
+                return 1;
             }
+            curr_coord = &(*curr_coord)->next;
+        }
+    }
 
     *centroids = cent;
     return 0;
@@ -157,7 +189,7 @@ int add_coord_to_centroid(struct centroid *cent, struct datapoint *point, int d)
         curr_datapoint_coord = curr_datapoint_coord->next;
     }
     return 0;
-    }
+}
 
 double calc_euclidean_distance(struct centroid *cent, struct datapoint *point2, int d){
     double sum = 0;
@@ -184,26 +216,26 @@ int run_kmeans(int d, int K, int iter, struct datapoint *points, struct centroid
     int i = 0;
     
     for (i = 0; i < iter && is_not_converged; i++) {
-        point = points;
-        do {
+        /* for each point, find closest centroid */
+        for (point = points; point != NULL; point = point->next) {
             struct centroid *min_cent = centroids;
             double min_distance = HUGE_VAL;
             double curr_distance = 0;
-            for (index = 0; index<K; index++){
-                curr_distance = calc_euclidean_distance(centroids + index, point, d);
-                if (curr_distance < min_distance){
-                    min_distance = curr_distance;
-                    min_cent = (centroids + index);
-                }
-            }
-            min_cent->count = min_cent->count+1;
-            add_coord(min_cent, point, d);
+
             /*
             TODO: Go over all centroids - find closest (euclidean distance function), add to sum and counter of centroid.
             */
-            point = point->next;
-        } while (point != NULL);
-        
+            for (index = 0; index < K; index++){
+                curr_distance = calc_euclidean_distance(centroids + index, point, d);
+                if (curr_distance < min_distance){
+                    min_distance = curr_distance;
+                    min_cent = centroids + index;
+                }
+            }
+            min_cent->count++;
+            add_coord_to_centroid(min_cent, point, d);
+        }
+ 
         cent = centroids;
         for (j = 0; j < K; j++, cent++) {
             struct coord *curr_coord = cent->centroid_coords;
@@ -223,8 +255,6 @@ int run_kmeans(int d, int K, int iter, struct datapoint *points, struct centroid
                 }
             }
             cent->count = 0;
-            
-
 
             /*
             * TODO: Go over all centroids:
@@ -256,16 +286,12 @@ int main(int argc, char *argv[]) {
     }
 
     /* TODO: printing the data, can delete later */
-    curr_datapoint = datapoints;
-    do {
-        curr_coord = curr_datapoint->coords;
-        do {
+    for (curr_datapoint = datapoints; curr_datapoint != NULL; curr_datapoint = curr_datapoint->next) {
+        for (curr_coord = curr_datapoint->coords; curr_coord != NULL; curr_coord = curr_coord->next) {
             printf("%f,", curr_coord->coord);
-            curr_coord = curr_coord->next;
-        } while (curr_coord->next != NULL);
+        }
         printf("\n");
-        curr_datapoint = curr_datapoint->next;
-    } while (curr_datapoint->next != NULL);
+    }
 
     if (0 != init_centroids(d, K, datapoints, &centroids)) {
         /* TODO: later delete indicative error */

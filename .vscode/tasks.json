@@ -32,9 +32,14 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
+                "-ansi",
+                "-Wextra",
+                "-Werror",
+                "-pedantic-errors",
                 "${file}",
                 "-o",
-                "${fileDirname}/${fileBasenameNoExtension}"
+                "${fileDirname}/${fileBasenameNoExtension}",
+                "-lm"
             ],
             "options": {
                 "cwd": "${fileDirname}"
