@@ -71,7 +71,10 @@ int read_args(int argc, char *argv[], int *K, int *iter, int *d, int *N, struct 
     struct coord *first_coord;
     struct coord ** curr_coord;
 
-    /* TODO: check argc count */
+    if (argc < 2 || argc > 3) {
+        printf("An Error Has Occurred\n");
+        return 1;
+    }
 
     /* Read arguments - argc should be 2 if there is not iter arg, 3 if there is */
     if (argc == 3) {
@@ -91,7 +94,6 @@ int read_args(int argc, char *argv[], int *K, int *iter, int *d, int *N, struct 
 
     /* init the first datapoint and its first coordinate */
     init_datapoints(datapoints, &curr_datapoint);
-    /* init_coords(&first_coord, &curr_coord); */
 
     /* go over first line to get d */
     first_coord = NULL;
@@ -106,7 +108,6 @@ int read_args(int argc, char *argv[], int *K, int *iter, int *d, int *N, struct 
     } while (delim != '\n');
 
     progress_datapoint(&curr_datapoint, &first_coord);
-    /* init_coords(&first_coord, &curr_coord); */
     (*N)++;
 
     /* go over the rest of the lines to get datapoints and N */
@@ -119,7 +120,6 @@ int read_args(int argc, char *argv[], int *K, int *iter, int *d, int *N, struct 
         curr_coord = &(*curr_coord)->next;
 
         if (delim == '\n') { /* if at the end of the line */
-            /* TODO: what to insert at EOF? */
             progress_datapoint(&curr_datapoint, &first_coord);
             first_coord = NULL;
             curr_coord = &first_coord;
@@ -266,7 +266,18 @@ int run_kmeans(int d, int K, int iter, struct datapoint *points, struct centroid
     return 0;
 }
 
+void free_all(int K, struct datapoint *datapoints, struct centroid *centroids) {
+    int i;
+    struct centroid *centroid;
+    struct coord *curr_coord;
 
+    centroid = centroids;
+    for (i = 0; i < K; i++, centroid++) {
+        /* TODO free centroid coords */
+    }
+    free(centroids);
+    
+}
 
 int main(int argc, char *argv[]) {
     int K = 0;
@@ -319,7 +330,7 @@ int main(int argc, char *argv[]) {
     }
 
     /* TODO: free memory */
-    free(centroids);
+    free_all(K, datapoints, centroids);
 
     printf("Done\n");
     return 0;
