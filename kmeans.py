@@ -73,8 +73,5 @@ def main():
     for centroid in centroids:
         print(",".join(["%.4f" % coord for coord in centroid]))
 
-    # TODO: remove this print before submitting
-    print("Done")
-
 if __name__ == "__main__":
     main()
