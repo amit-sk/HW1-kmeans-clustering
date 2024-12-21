@@ -176,10 +176,8 @@ int add_coord_to_centroid(struct centroid *cent, struct datapoint *point, int d)
     return 0;
 }
 
-double calc_euclidean_distance(struct centroid *cent, struct datapoint *point2, int d){
+double calc_euclidean_distance(struct coord *coord1, struct coord *coord2, int d){
     double sum = 0;
-    struct coord *coord1 = cent->centroid_coords;
-    struct coord *coord2 = point2->coords;
     int i;
 
     for (i = 0; i < d; i++){
@@ -211,7 +209,7 @@ int run_kmeans(int d, int K, int iter, struct datapoint *points, struct centroid
             TODO: Go over all centroids - find closest (euclidean distance function), add to sum and counter of centroid.
             */
             for (index = 0; index < K; index++){
-                curr_distance = calc_euclidean_distance(centroids + index, point, d);
+                curr_distance = calc_euclidean_distance((centroids + index)->centroid_coords, point->coords, d);
                 if (curr_distance < min_distance){
                     min_distance = curr_distance;
                     min_cent = centroids + index;
@@ -227,7 +225,6 @@ int run_kmeans(int d, int K, int iter, struct datapoint *points, struct centroid
             struct coord *curr_coord = cent->centroid_coords;
             struct coord *sum_coord = cent->sum;
             struct coord *curr_sum_coord = sum_coord;
-            struct datapoint *sum_datapoint;
             int count = cent->count;
             int curr_sum = 0;
 
@@ -238,8 +235,7 @@ int run_kmeans(int d, int K, int iter, struct datapoint *points, struct centroid
                 curr_sum_coord = curr_sum_coord->next;
             }
 
-            init_datapoint(&sum_datapoint, sum_coord);
-            if (calc_euclidean_distance(cent, sum_datapoint, d) >= EPSILON) {
+            if (calc_euclidean_distance(cent->centroid_coords, sum_coord, d) >= EPSILON) {
                 is_not_converged = 1;
             }
 
@@ -250,7 +246,6 @@ int run_kmeans(int d, int K, int iter, struct datapoint *points, struct centroid
                 sum_coord = sum_coord->next;
             }
             cent->count = 0;
-           free(sum_datapoint);
 
             /*
             * TODO: Go over all centroids:
@@ -339,8 +334,11 @@ int main(int argc, char *argv[]) {
     for (i = 0;i<K;i++){
         struct coord *curr_coord = (centroids + i)->centroid_coords;
         do {
-            printf("%.4f,", curr_coord->coord);
+            printf("%.4f", curr_coord->coord);
             curr_coord = curr_coord->next;
+            if (curr_coord != NULL) {
+                printf(",");
+            }
         } while (curr_coord != NULL);
         printf("\n");
     }
