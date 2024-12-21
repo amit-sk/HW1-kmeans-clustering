@@ -54,7 +54,8 @@ def run_kmeans(K, datapoints, centroids, d, iter):
             centroids_counters[min_dist_centroid] += 1
         
         # set the new centroids to the mean of all of the points closest to them
-        centroids = [centroids_sums[i] / centroids_counters[i] for i in range(K)]
+        centroids = [centroids_sums[i] / centroids_counters[i] if centroids_counters[i] != 0 else old_centroids[i] \
+                     for i in range(K)]
 
         # if the centroids barely moved since the last iteration, stop
         if max([euclidean_distance(centroids[i], old_centroids[i]) for i in range(K)]) < eps:
