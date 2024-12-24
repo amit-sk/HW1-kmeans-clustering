@@ -279,38 +279,9 @@ void free_all(int K, struct datapoint *datapoints, struct centroid *centroids) {
     }
 }
 
-int main(int argc, char *argv[]) {
-    int return_code = 0;
-    int K = 0;
-    int iter = DEFAULT_ITER;
-    int d = 0;
-    int N = 0;
-    struct datapoint *datapoints = NULL;
-    struct centroid *centroids = NULL;
-    int i;
-
-    if (0 != read_args(argc, argv, &K, &iter, &d, &N, &datapoints)) {
-        return_code = 1;
-        goto cleanup;
-    }
-
-    if (0 != init_centroids(d, K, datapoints, &centroids)) {
-        /* TODO: later delete indicative error */
-        printf("Error initializing centroids\n");
-        printf("An Error Has Occurred\n");
-        return_code = 1;
-        goto cleanup;
-    }
-
-    if (0 != run_kmeans(d, K, iter, datapoints, centroids)) {
-        /* TODO: later delete indicative error */
-        printf("Error in kmeans algorithm\n");
-        printf("An Error Has Occurred\n");
-        return_code = 1;
-        goto cleanup;
-    }
-
-    for (i = 0;i<K;i++){
+void print_results(int K, struct centroid *centroids) {
+    int i = 0;
+    for (; i < K; i++){
         struct coord *curr_coord = (centroids + i)->centroid_coords;
         do {
             printf("%.4f", curr_coord->coord);
@@ -321,6 +292,35 @@ int main(int argc, char *argv[]) {
         } while (curr_coord != NULL);
         printf("\n");
     }
+}
+
+int main(int argc, char *argv[]) {
+    int return_code = 0;
+    int K = 0;
+    int iter = DEFAULT_ITER;
+    int d = 0;
+    int N = 0;
+    struct datapoint *datapoints = NULL;
+    struct centroid *centroids = NULL;
+
+    if (0 != read_args(argc, argv, &K, &iter, &d, &N, &datapoints)) {
+        return_code = 1;
+        goto cleanup;
+    }
+
+    if (0 != init_centroids(d, K, datapoints, &centroids)) {
+        printf("An Error Has Occurred\n");
+        return_code = 1;
+        goto cleanup;
+    }
+
+    if (0 != run_kmeans(d, K, iter, datapoints, centroids)) {
+        printf("An Error Has Occurred\n");
+        return_code = 1;
+        goto cleanup;
+    }
+
+    print_results(K, centroids);
 
 cleanup:
     free_all(K, datapoints, centroids);
