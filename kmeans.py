@@ -1,5 +1,4 @@
 import sys
-import numpy as np
 
 def read_args():
     iter = int(sys.argv[2]) if len(sys.argv) == 4 else 200
@@ -11,7 +10,7 @@ def read_args():
     K = int(sys.argv[1])
     
     with open(sys.argv[-1]) as input_file:
-        datapoints = [np.array([float(coord) for coord in line.rstrip().split(",")]) for line in input_file]
+        datapoints = [[float(coord) for coord in line.rstrip().split(",")] for line in input_file]
     N = len(datapoints)
 
     if not 1 < K < N:
@@ -33,7 +32,7 @@ def run_kmeans(K, datapoints, centroids, d, iter):
 
     for i in range(iter):
         old_centroids = centroids
-        centroids_sums = [np.zeros(d) for j in range(K)]
+        centroids_sums = [[0 for i in range(d)] for j in range(K)]
         centroids_counters = [0 for i in range(K)]
         
         for point in datapoints:
@@ -50,12 +49,12 @@ def run_kmeans(K, datapoints, centroids, d, iter):
                     min_dist_centroid = ind
             
             # add the point to the closest centroid's sum and up its counter by 1
-            centroids_sums[min_dist_centroid] += point
+            for coord in range(d):
+                centroids_sums[min_dist_centroid][coord] += point[coord]
             centroids_counters[min_dist_centroid] += 1
         
         # set the new centroids to the mean of all of the points closest to them
-        centroids = [centroids_sums[i] / centroids_counters[i] if centroids_counters[i] != 0 else old_centroids[i] \
-                     for i in range(K)]
+        centroids = [[centroids_sums[j][i] / centroids_counters[j] for i in range(d)] for j in range(K)]
 
         # if the centroids barely moved since the last iteration, stop
         if max([euclidean_distance(centroids[i], old_centroids[i]) for i in range(K)]) < eps:
