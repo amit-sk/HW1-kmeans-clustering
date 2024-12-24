@@ -10,7 +10,7 @@ def read_args():
 
     K = int(sys.argv[1])
     
-    with open(sys.argv[3]) as input_file:
+    with open(sys.argv[-1]) as input_file:
         datapoints = [np.array([float(coord) for coord in line.rstrip().split(",")]) for line in input_file]
     N = len(datapoints)
 
