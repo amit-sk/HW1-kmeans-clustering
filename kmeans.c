@@ -5,6 +5,10 @@
 const double EPSILON = 0.001;
 const int DEFAULT_ITER = 200;
 
+const char *GENERIC_ERROR_MSG = "An Error Has Occurred\n";
+const char *INVALID_K_ERROR_MSG = "Invalid number of clusters!\n";
+const char *INVALID_ITER_ERROR_MSG = "Invalid maximum iteration!\n";
+
 struct centroid {
     struct coord *centroid_coords;
     struct coord *sum;
@@ -48,6 +52,21 @@ int init_coord(struct coord **coord, double n) {
     return 0;
 }
 
+int parse_integer(char *src, int *dest) {
+    int n = 0;
+    int chars_read = 0;
+    int amount_parsed = 0;
+
+    amount_parsed = sscanf(src, "%d%n", &n, &chars_read);
+    if (amount_parsed != 1 || src[chars_read] != '\0') {
+        /* failed to parse integer, or trailing characters found */
+        return 1;
+    }
+
+    *dest = n;
+    return 0;
+}
+
 /* parse the args (K, iter and the datapoints) */
 int read_args(int argc, char *argv[], int *K, int *iter, int *d, int *N, struct datapoint **datapoints) {
     /* init vars for reading the file */
@@ -57,24 +76,23 @@ int read_args(int argc, char *argv[], int *K, int *iter, int *d, int *N, struct 
     struct coord *first_coord = NULL;
     struct coord **curr_coord = NULL;
 
-    if (argc < 2 || argc > 3) {
-        printf("An Error Has Occurred\n");
-        return 1;
-    }
-
     /* Read arguments - argc should be 2 if there is not iter arg, 3 if there is */
-    if (argc == 3) {
-        sscanf(argv[2], "%d", iter);
-    }
-    sscanf(argv[1], "%d", K);
-
-    /* validate K from below & iter */
-    if (*K <= 1) {
-        printf("Invalid number of clusters!\n");
+    if (argc < 2 || argc > 3) {
+        printf("%s", GENERIC_ERROR_MSG);
         return 1;
     }
-    if (*iter <= 1 || *iter >= 1000) {
-        printf("Invalid maximum iteration!\n");
+
+    /* read and validate iter, if given */
+    if (argc == 3) {
+        if (0 != parse_integer(argv[2], iter) || *iter <= 1 || *iter >= 1000) {
+            printf("%s", INVALID_ITER_ERROR_MSG);
+            return 1;
+        }
+    }
+
+    /* read and validate K from below */
+    if (0 != parse_integer(argv[1], K) || *K <= 1) {
+        printf("%s", INVALID_K_ERROR_MSG);
         return 1;
     }
 
@@ -114,7 +132,7 @@ int read_args(int argc, char *argv[], int *K, int *iter, int *d, int *N, struct 
 
     /* validate K from above */
     if (*K >= *N) {
-        printf("Invalid number of clusters!\n");
+        printf("%s", INVALID_K_ERROR_MSG);
         return 1;
     }
 
@@ -160,7 +178,7 @@ int init_centroids(int d, int K, struct datapoint *points, struct centroid **cen
     return 0;
 }
 
-int add_coord_to_centroid(struct centroid *cent, struct datapoint *point, int d){
+void add_coord_to_centroid(struct centroid *cent, struct datapoint *point, int d){
     int i;
     struct coord *curr_sum_coord = cent->sum;
     struct coord *curr_datapoint_coord = point->coords;
@@ -170,7 +188,6 @@ int add_coord_to_centroid(struct centroid *cent, struct datapoint *point, int d)
         curr_sum_coord = curr_sum_coord->next;
         curr_datapoint_coord = curr_datapoint_coord->next;
     }
-    return 0;
 }
 
 double calc_euclidean_distance(struct coord *coord1, struct coord *coord2, int d){
@@ -186,7 +203,7 @@ double calc_euclidean_distance(struct coord *coord1, struct coord *coord2, int d
 }
 
 
-int run_kmeans(int d, int K, int iter, struct datapoint *points, struct centroid *centroids) {
+void run_kmeans(int d, int K, int iter, struct datapoint *points, struct centroid *centroids) {
     int is_not_converged = 1;
     int j = 0;
     int k = 0;
@@ -244,7 +261,6 @@ int run_kmeans(int d, int K, int iter, struct datapoint *points, struct centroid
             cent->count = 0;
         }
     }
-    return 0;
 }
 
 void free_coords(struct coord *coord) {
@@ -309,17 +325,12 @@ int main(int argc, char *argv[]) {
     }
 
     if (0 != init_centroids(d, K, datapoints, &centroids)) {
-        printf("An Error Has Occurred\n");
+        printf("%s", GENERIC_ERROR_MSG);
         return_code = 1;
         goto cleanup;
     }
 
-    if (0 != run_kmeans(d, K, iter, datapoints, centroids)) {
-        printf("An Error Has Occurred\n");
-        return_code = 1;
-        goto cleanup;
-    }
-
+    run_kmeans(d, K, iter, datapoints, centroids);
     print_results(K, centroids);
 
 cleanup:
