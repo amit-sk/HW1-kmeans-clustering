@@ -52,6 +52,55 @@ int init_coord(struct coord **coord, double n) {
     return 0;
 }
 
+int parse_file(int *d, int *N, struct datapoint **datapoints) {
+    double n; /* for the double values */
+    char delim; /* commas, \n, ... */
+    struct datapoint **curr_datapoint = datapoints;
+    struct coord *first_coord = NULL;
+    struct coord **curr_coord = NULL;
+
+    /* go over first line to get d */
+    first_coord = NULL;
+    curr_coord = &first_coord;
+    do {
+        scanf("%lf%c", &n, &delim);
+        if (0 != init_coord(curr_coord, n)) {
+            return 1;
+        }
+        curr_coord = &(*curr_coord)->next;
+        (*d)++;
+    } while (delim != '\n');
+
+    /* initialize the first datapoint */
+    if (0 != init_datapoint(curr_datapoint, first_coord)) {
+        return 1;
+    }
+    curr_datapoint = &(*curr_datapoint)->next;
+    (*N)++;
+
+    /* go over the rest of the lines to get datapoints and N */
+    first_coord = NULL;
+    curr_coord = &first_coord;
+    while (scanf("%lf%c", &n, &delim) == 2) {
+        if (0 != init_coord(curr_coord, n)) {
+            return 1;
+        }
+        curr_coord = &(*curr_coord)->next;
+
+        if (delim == '\n') { /* if at the end of the line */
+            if (0 != init_datapoint(curr_datapoint, first_coord)) {
+                return 1;
+            }
+            curr_datapoint = &(*curr_datapoint)->next;
+            first_coord = NULL;
+            curr_coord = &first_coord;
+            (*N)++;
+        }
+    }
+
+    return 0;
+}
+
 int parse_integer(char *src, int *dest) {
     int n = 0;
     int chars_read = 0;
@@ -69,13 +118,6 @@ int parse_integer(char *src, int *dest) {
 
 /* parse the args (K, iter and the datapoints) */
 int read_args(int argc, char *argv[], int *K, int *iter, int *d, int *N, struct datapoint **datapoints) {
-    /* init vars for reading the file */
-    double n; /* for the double values */
-    char delim; /* commas/\n/... */
-    struct datapoint **curr_datapoint = datapoints;
-    struct coord *first_coord = NULL;
-    struct coord **curr_coord = NULL;
-
     /* Read arguments - argc should be 2 if there is not iter arg, 3 if there is */
     if (argc < 2 || argc > 3) {
         printf("%s", GENERIC_ERROR_MSG);
@@ -96,38 +138,10 @@ int read_args(int argc, char *argv[], int *K, int *iter, int *d, int *N, struct 
         return 1;
     }
 
-    /* go over first line to get d */
-    first_coord = NULL;
-    curr_coord = &first_coord;
-    do {
-        scanf("%lf%c", &n, &delim);
-        if (0 != init_coord(curr_coord, n)) {
-            return 1;
-        }
-        curr_coord = &(*curr_coord)->next;
-        (*d)++;
-    } while (delim != '\n');
-
-    init_datapoint(curr_datapoint, first_coord);
-    curr_datapoint = &(*curr_datapoint)->next;
-    (*N)++;
-
-    /* go over the rest of the lines to get datapoints and N */
-    first_coord = NULL;
-    curr_coord = &first_coord;
-    while (scanf("%lf%c", &n, &delim) == 2) {
-        if (0 != init_coord(curr_coord, n)) {
-            return 1;
-        }
-        curr_coord = &(*curr_coord)->next;
-
-        if (delim == '\n') { /* if at the end of the line */
-            init_datapoint(curr_datapoint, first_coord);
-            curr_datapoint = &(*curr_datapoint)->next;
-            first_coord = NULL;
-            curr_coord = &first_coord;
-            (*N)++;
-        }
+    /* parses datapoints from file and obtains d and N */
+    if (0 != parse_file(d, N, datapoints)) {
+        printf("%s", GENERIC_ERROR_MSG);
+        return 1;
     }
 
     /* validate K from above */
