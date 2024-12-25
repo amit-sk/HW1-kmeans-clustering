@@ -1,19 +1,26 @@
 import sys
 
 def read_args():
-    iter = int(sys.argv[2]) if len(sys.argv) == 4 else 200
+    argc = len(sys.argv)
+    if argc < 2 or argc > 4:
+        print("An Error Has Occurred")
+        return 0, 0, [], 0, 0, False
+    
+    iter = 200
+    if len(sys.argv) == 4:
+        iter = int(sys.argv[2]) if sys.argv[2].isnumeric() else None
 
-    if not 1 < iter < 1000:
+    if iter is None or (not 1 < iter < 1000):
         print("Invalid maximum iteration!")
         return 0, 0, [], 0, 0, False
 
-    K = int(sys.argv[1])
+    K = int(sys.argv[1]) if sys.argv[1].isnumeric() else None
     
     with open(sys.argv[-1]) as input_file:
         datapoints = [[float(coord) for coord in line.rstrip().split(",")] for line in input_file]
     N = len(datapoints)
 
-    if not 1 < K < N:
+    if K is None or (not 1 < K < N):
         print("Invalid number of clusters!")
         return 0, 0, [], 0, 0, False
     
