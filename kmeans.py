@@ -1,17 +1,24 @@
 import sys
 
+EPSILON = 0.001
+DEFAULT_ITER = 200
+
+GENERIC_ERROR_MSG = "An Error Has Occurred"
+INVALID_K_ERROR_MSG = "Invalid number of clusters!"
+INVALID_ITER_ERROR_MSG = "Invalid maximum iteration!"
+
 def read_args():
     argc = len(sys.argv)
     if argc < 2 or argc > 4:
-        print("An Error Has Occurred")
+        print(GENERIC_ERROR_MSG)
         return 0, 0, [], 0, 0, False
     
-    iter = 200
+    iter = DEFAULT_ITER
     if len(sys.argv) == 4:
         iter = int(sys.argv[2]) if sys.argv[2].isnumeric() else None
 
     if iter is None or (not 1 < iter < 1000):
-        print("Invalid maximum iteration!")
+        print(INVALID_ITER_ERROR_MSG)
         return 0, 0, [], 0, 0, False
 
     K = int(sys.argv[1]) if sys.argv[1].isnumeric() else None
@@ -21,7 +28,7 @@ def read_args():
     N = len(datapoints)
 
     if K is None or (not 1 < K < N):
-        print("Invalid number of clusters!")
+        print(INVALID_K_ERROR_MSG)
         return 0, 0, [], 0, 0, False
     
     d = len(datapoints[0])
@@ -35,7 +42,7 @@ def init_centroids(K, datapoints):
     return datapoints[:K]
 
 def run_kmeans(K, datapoints, centroids, d, iter):
-    eps = 0.001
+    eps = EPSILON
 
     for i in range(iter):
         old_centroids = centroids
@@ -80,4 +87,7 @@ def main():
         print(",".join(["%.4f" % coord for coord in centroid]))
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception:
+        print(GENERIC_ERROR_MSG)
