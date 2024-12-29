@@ -112,6 +112,16 @@ int parse_integer(char *src, int *dest) {
     amount_parsed = sscanf(src, "%d%n", &n, &chars_read);
     if (amount_parsed != 1 || src[chars_read] != '\0') {
         /* failed to parse integer, or trailing characters found */
+        if (src[chars_read] == '.') {
+            char *trail_string = src + (chars_read + 1);
+            int trail = 0;
+            int trail_chars_read = 0;
+            amount_parsed = sscanf(trail_string, "%d%n", &trail, &trail_chars_read);
+            if (!trail && amount_parsed <= 1 && !trail_string[trail_chars_read]) {
+                *dest = n;
+                return SUCCESS;
+            }
+        }
         return ERROR;
     }
 

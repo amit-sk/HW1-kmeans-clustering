@@ -7,6 +7,12 @@ GENERIC_ERROR_MSG = "An Error Has Occurred"
 INVALID_K_ERROR_MSG = "Invalid number of clusters!"
 INVALID_ITER_ERROR_MSG = "Invalid maximum iteration!"
 
+def is_integer(string):
+    try:
+        return float(string) == int(float(string))
+    except ValueError:
+        return False
+
 def read_args():
     argc = len(sys.argv)
     if argc < 2 or argc > 4:
@@ -15,13 +21,13 @@ def read_args():
     
     iter = DEFAULT_ITER
     if len(sys.argv) == 4:
-        iter = int(sys.argv[2]) if sys.argv[2].isnumeric() else None
+        iter = int(float(sys.argv[2])) if is_integer(sys.argv[2]) else None
 
     if iter is None or (not 1 < iter < 1000):
         print(INVALID_ITER_ERROR_MSG)
         return 0, 0, [], 0, 0, False
 
-    K = int(sys.argv[1]) if sys.argv[1].isnumeric() else None
+    K = int(float(sys.argv[1])) if is_integer(sys.argv[1]) else None
     
     with open(sys.argv[-1]) as input_file:
         datapoints = [[float(coord) for coord in line.rstrip().split(",")] for line in input_file]
