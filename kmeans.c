@@ -265,7 +265,6 @@ void run_kmeans(int d, int K, int iter, struct datapoint *points, struct centroi
             struct coord *sum_coord = cent->sum;
             struct coord *curr_sum_coord = sum_coord;
             int count = cent->count;
-            int curr_sum = 0;
 
             for (k = 0; k < d; k++) {
                 if (count != 0) {
