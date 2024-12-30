@@ -15,7 +15,7 @@ def is_integer(string):
 
 def read_args():
     argc = len(sys.argv)
-    if argc < 2 or argc > 4:
+    if argc < 3 or argc > 4:
         print(GENERIC_ERROR_MSG)
         return 0, 0, [], 0, 0, False
     
